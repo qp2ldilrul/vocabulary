@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>教育部 1200 單字終極挑戰</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; padding: 15px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 500px; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .hidden { display: none; }
+        .question-box { background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 15px; border-left: 5px solid #1a73e8; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .options label { display: block; background: #f8f9fa; margin: 8px 0; padding: 12px; border-radius: 8px; cursor: pointer; border: 1px solid #eee; }
+        button { width: 100%; padding: 15px; font-size: 18px; cursor: pointer; border-radius: 10px; border: none; margin-top: 10px; font-weight: bold; }
+        .btn-blue { background: #1a73e8; color: white; }
+        .btn-next { background: #34a853; color: white; }
+        .score { text-align: center; font-size: 32px; color: #d93025; margin: 20px 0; }
+        .review-card { background: #fff5f5; padding: 15px; border-radius: 10px; margin-bottom: 10px; border: 1px solid #ffcccc; position: relative; }
+        .speaker { position: absolute; right: 15px; top: 15px; font-size: 24px; cursor: pointer; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1 style="text-align:center; color:#1a73e8;">📖 1200 單字全庫挑戰</h1>
+    
+    <div id="page-start">
+        <input type="text" id="userName" style="width:100%; padding:15px; box-sizing:border-box; border-radius:10px; border:1px solid #ddd; font-size:18px;" placeholder="輸入名字">
+        <button class="btn-blue" onclick="start()">開始隨機 20 題</button>
+    </div>
+
+    <div id="page-quiz" class="hidden">
+        <div id="quiz-cont"></div>
+        <button class="btn-next" id="next-btn" onclick="nextPage()">下一頁</button>
+    </div>
+
+    <div id="page-res" class="hidden">
+        <div id="score-text" class="score"></div>
+        <div id="review-list"></div>
+        <button class="btn-blue" onclick="location.reload()">重新測驗</button>
+    </div>
+</div>
+
+<script>
+    // 【核心單字庫區】— 這裡我已經為您分類整理好 1200 字的主要範圍
+    const db = [
+    // --- 第一批次：人物、身體、健康 ---
+    {e:"adult",c:"成人"},{e:"angel",c:"天使"},{e:"baby",c:"嬰兒"},{e:"boy",c:"男孩"},{e:"child",c:"小孩"},{e:"couple",c:"情侶/夫妻"},{e:"customer",c:"顧客"},{e:"fool",c:"呆子"},{e:"genius",c:"天才"},{e:"gentleman",c:"紳士"},{e:"giant",c:"巨人"},{e:"girl",c:"女孩"},{e:"guest",c:"客人"},{e:"guy",c:"傢伙"},{e:"hero",c:"英雄"},{e:"host",c:"男主人"},{e:"kid",c:"孩童"},{e:"king",c:"國王"},{e:"lady",c:"女士"},{e:"male",c:"男性"},{e:"man",c:"男人"},{e:"master",c:"主人/大師"},{e:"neighbor",c:"鄰居"},{e:"person",c:"人"},{e:"prince",c:"王子"},{e:"princess",c:"公主"},{e:"queen",c:"皇后"},{e:"stranger",c:"陌生人"},{e:"teenager",c:"青少年"},{e:"visitor",c:"訪客"},{e:"woman",c:"女人"},{e:"youth",c:"年輕人"},{e:"active",c:"積極的"},{e:"angry",c:"生氣的"},{e:"bad",c:"壞的"},{e:"beautiful",c:"美麗的"},{e:"blind",c:"瞎的"},{e:"bored",c:"感到無聊的"},{e:"boring",c:"枯燥無趣的"},{e:"brave",c:"勇敢的"},{e:"busy",c:"忙碌的"},{e:"careful",c:"小心的"},{e:"careless",c:"粗心的"},{e:"clever",c:"聰明的"},{e:"confident",c:"有信心的"},{e:"cruel",c:"殘忍的"},{e:"curious",c:"好奇的"},{e:"deaf",c:"聾的"},{e:"diligent",c:"勤奮的"},{e:"dishonest",c:"不誠實的"},{e:"dumb",c:"啞的"},{e:"energetic",c:"精力充沛的"},{e:"famous",c:"著名的"},{e:"fat",c:"胖的"},{e:"friendly",c:"友善的"},{e:"funny",c:"好笑的"},{e:"generous",c:"大方的"},{e:"gentle",c:"溫和的"},{e:"good",c:"好的"},{e:"greedy",c:"貪心的"},{e:"handsome",c:"帥的"},{e:"happy",c:"快樂的"},{e:"hard-working",c:"認真努力的"},{e:"heavy",c:"重的"},{e:"honest",c:"誠實的"},{e:"humble",c:"謙虛的"},{e:"humorous",c:"幽默的"},{e:"impolite",c:"不禮貌的"},{e:"intelligent",c:"有才智的"},{e:"interested",c:"感興趣的"},{e:"jealous",c:"忌妒的"},{e:"kind",c:"親切的"},{e:"lazy",c:"懶惰的"},{e:"lonely",c:"孤獨的"},{e:"lovely",c:"可愛的"},{e:"mad",c:"發狂的"},{e:"naughty",c:"頑皮的"},{e:"nervous",c:"緊張的"},{e:"nice",c:"好的"},{e:"old",c:"老的"},{e:"patient",c:"有耐心的"},{e:"polite",c:"有禮貌的"},{e:"poor",c:"窮的"},{e:"proud",c:"驕傲的"},{e:"rich",c:"富有的"},{e:"rude",c:"粗魯的"},{e:"sad",c:"傷心的"},{e:"selfish",c:"自私的"},{e:"short",c:"短的/矮的"},{e:"shy",c:"害羞的"},{e:"slim",c:"苗條的"},{e:"smart",c:"聰明的"},{e:"stupid",c:"笨的"},{e:"successful",c:"成功的"},{e:"talkative",c:"健談的"},{e:"tall",c:"高的"},{e:"thin",c:"瘦的"},{e:"ugly",c:"醜的"},{e:"wise",c:"明智的"},{e:"young",c:"年輕的"},{e:"ankle",c:"腳踝"},{e:"arm",c:"手臂"},{e:"back",c:"背部"},{e:"beard",c:"鬍子"},{e:"body",c:"身體"},{e:"bone",c:"骨頭"},{e:"chin",c:"下巴"},{e:"ear",c:"耳朵"},{e:"elbow",c:"手肘"},{e:"eye",c:"眼睛"},{e:"face",c:"臉"},{e:"finger",c:"手指"},{e:"foot",c:"腳"},{e:"hair",c:"頭髮"},{e:"hand",c:"手"},{e:"head",c:"頭"},{e:"heart",c:"心臟"},{e:"hip",c:"臀部"},{e:"knee",c:"膝蓋"},{e:"leg",c:"腿"},{e:"lip",c:"嘴唇"},{e:"mouth",c:"嘴巴"},{e:"neck",c:"脖子"},{e:"nose",c:"鼻子"},{e:"shoulder",c:"肩膀"},{e:"skin",c:"皮膚"},{e:"stomach",c:"胃/肚子"},{e:"throat",c:"喉嚨"},{e:"thumb",c:"大拇指"},{e:"toe",c:"腳趾"},{e:"tongue",c:"舌頭"},{e:"tooth",c:"牙齒"},{e:"waist",c:"腰部"},{e:"wrist",c:"手腕"},{e:"cold",c:"感冒"},{e:"cough",c:"咳嗽"},{e:"dizzy",c:"頭暈的"},{e:"fever",c:"發燒"},{e:"flu",c:"流感"},{e:"headache",c:"頭痛"},{e:"healthy",c:"健康的"},{e:"painful",c:"痛苦的"},{e:"pale",c:"蒼白的"},{e:"sick",c:"生病的"},{e:"strong",c:"強壯的"},{e:"tired",c:"累的"},{e:"weak",c:"虛弱的"},{e:"wound",c:"傷口"},
+
+    // --- 第二批次：家人、數字、時間、金錢 ---
+    {e:"aunt",c:"姑/姨/伯母"},{e:"brother",c:"兄弟"},{e:"cousin",c:"堂表兄弟姐妹"},{e:"daughter",c:"女兒"},{e:"elder",c:"長輩"},{e:"family",c:"家人/家庭"},{e:"father",c:"父親"},{e:"granddaughter",c:"孫女"},{e:"grandfather",c:"祖父/外公"},{e:"grandmother",c:"祖母/外婆"},{e:"grandson",c:"孫子"},{e:"husband",c:"丈夫"},{e:"mother",c:"母親"},{e:"nephew",c:"姪子/外甥"},{e:"niece",c:"姪女/外甥女"},{e:"parent",c:"父母親"},{e:"relative",c:"親戚"},{e:"sister",c:"姊妹"},{e:"son",c:"兒子"},{e:"uncle",c:"叔/伯/舅/姑丈"},{e:"wife",c:"妻子"},{e:"zero",c:"零"},{e:"hundred",c:"一百"},{e:"thousand",c:"一千"},{e:"million",c:"百萬"},{e:"first",c:"第一"},{e:"second",c:"第二"},{e:"third",c:"第三"},{e:"fourth",c:"第四"},{e:"fifth",c:"第五"},{e:"last",c:"最後"},{e:"dozen",c:"一打"},{e:"both",c:"兩者都"},{e:"many",c:"很多的(可數)"},{e:"much",c:"很多的(不可數)"},{e:"several",c:"數個的"},{e:"total",c:"總共的"},{e:"dawn",c:"清晨"},{e:"morning",c:"早上"},{e:"noon",c:"正午"},{e:"afternoon",c:"下午"},{e:"evening",c:"傍晚"},{e:"night",c:"夜晚"},{e:"midnight",c:"午夜"},{e:"Monday",c:"週一"},{e:"Tuesday",c:"週二"},{e:"Wednesday",c:"週三"},{e:"Thursday",c:"週四"},{e:"Friday",c:"週五"},{e:"Saturday",c:"週六"},{e:"Sunday",c:"週日"},{e:"January",c:"一月"},{e:"February",c:"二月"},{e:"March",c:"三月"},{e:"April",c:"四月"},{e:"May",c:"五月"},{e:"June",c:"六月"},{e:"July",c:"七月"},{e:"August",c:"八月"},{e:"September",c:"九月"},{e:"October",c:"十月"},{e:"November",c:"十一月"},{e:"December",c:"十二月"},{e:"season",c:"季節"},{e:"spring",c:"春天"},{e:"summer",c:"夏天"},{e:"autumn",c:"秋天"},{e:"winter",c:"冬天"},{e:"moment",c:"片刻"},{e:"quarter",c:"一刻鐘"},{e:"past",c:"經過/過去"},{e:"future",c:"未來"},{e:"bill",c:"帳單"},{e:"cash",c:"現金"},{e:"cent",c:"分(錢)"},{e:"change",c:"零錢"},{e:"coin",c:"硬幣"},{e:"credit card",c:"信用卡"},{e:"dollar",c:"元"},{e:"money",c:"錢"},{e:"price",c:"價格"},{e:"borrow",c:"借入"},{e:"buy",c:"買"},{e:"charge",c:"索價"},{e:"cost",c:"花費"},{e:"lend",c:"借出"},{e:"pay",c:"付款"},{e:"spend",c:"花費(人為主詞)"},
+
+    // --- 第三批次：飲食 ---
+    {e:"fruit",c:"水果"},{e:"apple",c:"蘋果"},{e:"banana",c:"香蕉"},{e:"grape",c:"葡萄"},{e:"guava",c:"芭樂"},{e:"lemon",c:"檸檬"},{e:"mango",c:"芒果"},{e:"orange",c:"柳橙"},{e:"papaya",c:"木瓜"},{e:"peach",c:"桃子"},{e:"pear",c:"梨子"},{e:"pineapple",c:"鳳梨"},{e:"strawberry",c:"草莓"},{e:"tangerine",c:"橘子"},{e:"tomato",c:"番茄"},{e:"watermelon",c:"西瓜"},{e:"vegetable",c:"蔬菜"},{e:"bean",c:"豆子"},{e:"cabbage",c:"包心菜"},{e:"carrot",c:"胡蘿蔔"},{e:"corn",c:"玉米"},{e:"lettuce",c:"萵苣"},{e:"onion",c:"洋蔥"},{e:"potato",c:"馬鈴薯"},{e:"pumpkin",c:"南瓜"},{e:"beef",c:"牛肉"},{e:"bread",c:"麵包"},{e:"bun",c:"小圓麵包"},{e:"burger",c:"漢堡"},{e:"cereal",c:"穀類"},{e:"chicken",c:"雞肉"},{e:"dumpling",c:"餃子"},{e:"egg",c:"蛋"},{e:"fast food",c:"速食"},{e:"fish",c:"魚"},{e:"ham",c:"火腿"},{e:"hamburger",c:"漢堡"},{e:"hot dog",c:"熱狗"},{e:"instant noodle",c:"泡麵"},{e:"noodle",c:"麵條"},{e:"pizza",c:"披薩"},{e:"pork",c:"豬肉"},{e:"rice",c:"米/飯"},{e:"salad",c:"沙拉"},{e:"sandwich",c:"三明治"},{e:"seafood",c:"海鮮"},{e:"shrimp",c:"蝦子"},{e:"soup",c:"湯"},{e:"spaghetti",c:"義大利麵"},{e:"steak",c:"牛排"},{e:"tofu",c:"豆腐"},{e:"breakfast",c:"早餐"},{e:"brunch",c:"早午餐"},{e:"lunch",c:"午餐"},{e:"dinner",c:"晚餐"},{e:"supper",c:"宵夜"},{e:"meal",c:"餐點"},{e:"snack",c:"零食"},{e:"beer",c:"啤酒"},{e:"coffee",c:"咖啡"},{e:"coke",c:"可樂"},{e:"drink",c:"飲料"},{e:"ice",c:"冰"},{e:"juice",c:"果汁"},{e:"milk",c:"牛奶"},{e:"soda",c:"汽水"},{e:"tea",c:"茶"},{e:"water",c:"水"},{e:"biscuit",c:"餅乾"},{e:"cake",c:"蛋糕"},{e:"candy",c:"糖果"},{e:"chocolate",c:"巧克力"},{e:"cookie",c:"餅乾"},{e:"dessert",c:"甜點"},{e:"doughnut",c:"甜甜圈"},{e:"ice cream",c:"冰淇淋"},{e:"moon cake",c:"月餅"},{e:"pie",c:"派"},{e:"popcorn",c:"爆米花"},{e:"toast",c:"烤吐司"},{e:"butter",c:"奶油"},{e:"ketchup",c:"番茄醬"},{e:"cream",c:"奶油"},{e:"jam",c:"果醬"},{e:"oil",c:"油"},{e:"pepper",c:"胡椒"},{e:"soy-sauce",c:"醬油"},{e:"salt",c:"鹽"},{e:"sugar",c:"糖"},{e:"vinegar",c:"醋"},
+
+    // --- 第四批次：餐具、衣服、顏色、運動 ---
+    {e:"bowl",c:"碗"},{e:"chopsticks",c:"筷子"},{e:"cup",c:"杯子"},{e:"dish",c:"盤子"},{e:"fork",c:"叉子"},{e:"glass",c:"玻璃杯"},{e:"napkin",c:"餐巾"},{e:"plate",c:"盤子"},{e:"saucer",c:"碟子"},{e:"spoon",c:"湯匙"},{e:"straw",c:"吸管"},{e:"blouse",c:"女襯衫"},{e:"coat",c:"外套"},{e:"dress",c:"洋裝"},{e:"jacket",c:"夾克"},{e:"jeans",c:"牛仔褲"},{e:"pajamas",c:"睡衣"},{e:"pants",c:"長褲"},{e:"raincoat",c:"雨衣"},{e:"shirt",c:"襯衫"},{e:"T-shirt",c:"T恤"},{e:"shorts",c:"短褲"},{e:"skirt",c:"裙子"},{e:"suit",c:"西裝"},{e:"sweater",c:"毛衣"},{e:"trousers",c:"長褲"},{e:"uniform",c:"制服"},{e:"vest",c:"背心"},{e:"underwear",c:"內衣"},{e:"bag",c:"提包"},{e:"belt",c:"皮帶"},{e:"cap",c:"便帽"},{e:"comb",c:"梳子"},{e:"glove",c:"手套"},{e:"handkerchief",c:"手帕"},{e:"hat",c:"帽子"},{e:"mask",c:"口罩"},{e:"pocket",c:"口袋"},{e:"purse",c:"錢包"},{e:"ring",c:"戒指"},{e:"tie",c:"領帶"},{e:"umbrella",c:"雨傘"},{e:"wallet",c:"皮夾"},{e:"clothes",c:"衣服"},{e:"button",c:"鈕扣"},{e:"cotton",c:"棉花"},{e:"diamond",c:"鑽石"},{e:"gold",c:"金子"},{e:"silver",c:"銀子"},{e:"iron",c:"熨斗"},{e:"wear",c:"穿戴"},{e:"black",c:"黑色"},{e:"blue",c:"藍色"},{e:"brown",c:"褐色"},{e:"gray",c:"灰色"},{e:"green",c:"綠色"},{e:"orange",c:"橙色"},{e:"pink",c:"粉紅"},{e:"purple",c:"紫色"},{e:"red",c:"紅色"},{e:"white",c:"白色"},{e:"yellow",c:"黃色"},{e:"sports",c:"運動"},{e:"badminton",c:"羽毛球"},{e:"baseball",c:"棒球"},{e:"basketball",c:"籃球"},{e:"dodge ball",c:"躲避球"},{e:"football",c:"橄欖球"},{e:"Frisbee",c:"飛盤"},{e:"golf",c:"高爾夫"},{e:"race",c:"賽跑"},{e:"soccer",c:"足球"},{e:"softball",c:"壘球"},{e:"table tennis",c:"桌球"},{e:"tennis",c:"網球"},{e:"volleyball",c:"排球"},{e:"barbecue",c:"烤肉"},{e:"camping",c:"露營"},{e:"card",c:"卡片/牌"},{e:"chess",c:"西洋棋"},{e:"comic",c:"漫畫"},{e:"dance",c:"跳舞"},{e:"doll",c:"洋娃娃"},{e:"drama",c:"戲劇"},{e:"drawing",c:"素描"},{e:"exercise",c:"運動"},{e:"game",c:"遊戲"},{e:"hiking",c:"健行"},{e:"hobby",c:"嗜好"},{e:"jog",c:"慢跑"},{e:"movie",c:"電影"},{e:"music",c:"音樂"},{e:"novel",c:"小說"},{e:"paint",c:"油漆/畫"},{e:"piano",c:"鋼琴"},{e:"picnic",c:"野餐"},{e:"puzzle",c:"拼圖"},{e:"sing",c:"唱歌"},{e:"skate",c:"溜冰"},{e:"ski",c:"滑雪"},{e:"surf",c:"衝浪"},{e:"swim",c:"游泳"},{e:"travel",c:"旅行"},{e:"trip",c:"旅遊"},{e:"violin",c:"小提琴"},{e:"win",c:"贏"},{e:"lose",c:"輸"},{e:"play",c:"玩/彈奏"},{e:"fan",c:"迷"},
+// 主題十五：房屋和公寓 (House & Apartment)
+    {e:"apartment",c:"公寓"},{e:"building",c:"建築物"},{e:"house",c:"房屋"},{e:"home",c:"家"},
+    {e:"basement",c:"地下室"},{e:"bathroom",c:"浴室"},{e:"bedroom",c:"臥室"},{e:"dining room",c:"飯廳"},
+    {e:"fence",c:"圍牆"},{e:"garage",c:"車庫"},{e:"garden",c:"花園"},{e:"hall",c:"大廳/走廊"},
+    {e:"kitchen",c:"廚房"},{e:"living room",c:"客廳"},{e:"room",c:"房間"},{e:"study",c:"書房"},
+    {e:"yard",c:"院子"},{e:"balcony",c:"陽台"},{e:"ceiling",c:"天花板"},{e:"door",c:"門"},
+    {e:"downstairs",c:"樓下"},{e:"upstairs",c:"樓上"},{e:"floor",c:"地板/樓層"},{e:"gate",c:"大門"},
+    {e:"roof",c:"屋頂"},{e:"stairs",c:"樓梯"},{e:"wall",c:"牆壁"},{e:"window",c:"窗戶"},
+    {e:"address",c:"地址"},{e:"faucet",c:"水龍頭"},{e:"lamp",c:"檯燈"},{e:"light",c:"電燈"},
+    {e:"mirror",c:"鏡子"},{e:"shelf",c:"架子"},{e:"sink",c:"水槽"},{e:"sofa",c:"沙發"},
+    {e:"table",c:"桌子"},{e:"tub",c:"浴缸"},{e:"blanket",c:"毯子"},{e:"carpet",c:"地毯"},
+    {e:"hanger",c:"衣架"},{e:"pillow",c:"枕頭"},{e:"sheet",c:"床單"},{e:"toothbrush",c:"牙刷"},
+    {e:"soap",c:"肥皂"},{e:"towel",c:"毛巾"},{e:"air conditioner",c:"冷氣機"},{e:"camera",c:"相機"},
+    {e:"computer",c:"電腦"},{e:"dryer",c:"烘乾機"},{e:"fan",c:"電風扇"},{e:"microwave",c:"微波爐"},
+    {e:"radio",c:"收音機"},{e:"refrigerator",c:"冰箱"},{e:"telephone",c:"電話"},{e:"television",c:"電視"},
+    {e:"video",c:"影片/錄影帶"},{e:"walkman",c:"隨身聽"},{e:"printer",c:"印表機"},{e:"basket",c:"籃子"},
+    {e:"brick",c:"磚塊"},{e:"bucket",c:"水桶"},{e:"candle",c:"蠟燭"},{e:"hammer",c:"榔頭"},
+    {e:"housework",c:"家事"},{e:"key",c:"鑰匙"},{e:"mat",c:"墊子"},{e:"needle",c:"針"},
+    {e:"pan",c:"平底鍋"},{e:"pot",c:"壺/鍋"},{e:"teapot",c:"茶壺"},{e:"umbrella",c:"傘"},
+    {e:"toilet",c:"廁所"},{e:"trash can",c:"垃圾桶"},{e:"wok",c:"炒菜鍋"},
+// 主題十六：學校 (School)
+    {e:"campus",c:"校園"},{e:"classroom",c:"教室"},{e:"gym",c:"體育館"},{e:"playground",c:"操場"},
+    {e:"library",c:"圖書館"},{e:"lab",c:"實驗室"},{e:"office",c:"辦公室"},{e:"blackboard",c:"黑板"},
+    {e:"book",c:"書"},{e:"dictionary",c:"字典"},{e:"envelope",c:"信封"},{e:"eraser",c:"橡皮擦"},
+    {e:"ink",c:"墨水"},{e:"letter",c:"信"},{e:"map",c:"地圖"},{e:"marker",c:"麥克筆"},
+    {e:"notebook",c:"筆記本"},{e:"page",c:"網頁/頁"},{e:"paper",c:"紙"},{e:"pen",c:"原子筆"},
+    {e:"pencil",c:"鉛筆"},{e:"pencil case",c:"筆盒"},{e:"postcard",c:"明信片"},{e:"ruler",c:"尺"},
+    {e:"art",c:"藝術/美術"},{e:"Chinese",c:"中文"},{e:"English",c:"英文"},{e:"geography",c:"地理"},
+    {e:"history",c:"歷史"},{e:"math",c:"數學"},{e:"music",c:"音樂"},{e:"PE",c:"體育"},
+    {e:"science",c:"科學"},{e:"course",c:"課程"},{e:"homework",c:"家庭作業"},{e:"knowledge",c:"知識"},
+    {e:"lesson",c:"課"},{e:"grade",c:"年級/分數"},{e:"exam",c:"考試"},{e:"quiz",c:"小考"},
+    {e:"semester",c:"學期"},{e:"dictionary",c:"字典"},
+
+    // 主題十七：地點 (Place/Location)
+    {e:"bakery",c:"麵包店"},{e:"bank",c:"銀行"},{e:"beach",c:"海灘"},{e:"bookstore",c:"書店"},
+    {e:"church",c:"教堂"},{e:"clinic",c:"診所"},{e:"club",c:"俱樂部"},{e:"factory",c:"工廠"},
+    {e:"farm",c:"農場"},{e:"hospital",c:"醫院"},{e:"hotel",c:"飯店"},{e:"market",c:"市場"},
+    {e:"museum",c:"博物館"},{e:"park",c:"公園"},{e:"pool",c:"游泳池"},{e:"post office",c:"郵局"},
+    {e:"restaurant",c:"餐廳"},{e:"shop",c:"商店"},{e:"store",c:"商店"},{e:"supermarket",c:"超市"},
+    {e:"temple",c:"寺廟"},{e:"theater",c:"戲院/劇院"},{e:"zoo",c:"動物園"},{e:"city",c:"城市"},
+    {e:"country",c:"國家/鄉村"},{e:"town",c:"城鎮"},{e:"village",c:"村莊"},{e:"local",c:"當地的"},
+// 主題十八：交通工具 (Transportation)
+    {e:"airplane",c:"飛機"},{e:"bicycle",c:"腳踏車"},{e:"bike",c:"腳踏車/機車"},{e:"boat",c:"小船"},
+    {e:"bus",c:"公車"},{e:"car",c:"汽車"},{e:"helicopter",c:"直升機"},{e:"jeep",c:"吉普車"},
+    {e:"motorcycle",c:"摩托車"},{e:"moped",c:"電動機車"},{e:"scooter",c:"滑板車/輕型機車"},{e:"ship",c:"輪船"},
+    {e:"taxi",c:"計程車"},{e:"train",c:"火車"},{e:"truck",c:"卡車"},{e:"MRT",c:"捷運"},
+    {e:"ambulance",c:"救護車"},{e:"fire engine",c:"消防車"},{e:"tank",c:"坦克/油槽"},{e:"traffic",c:"交通"},
+
+    // 主題十九：職業 (Occupations)
+    {e:"actor",c:"男演員"},{e:"actress",c:"女演員"},{e:"assistant",c:"助理"},{e:"boss",c:"老闆"},
+    {e:"clerk",c:"店員/辦事員"},{e:"cook",c:"廚師"},{e:"dentist",c:"牙醫"},{e:"doctor",c:"醫生"},
+    {e:"driver",c:"司機"},{e:"engineer",c:"工程師"},{e:"farmer",c:"農夫"},{e:"fireman",c:"消防員"},
+    {e:"fisherman",c:"漁夫"},{e:"housewife",c:"家庭主婦"},{e:"lawyer",c:"律師"},{e:"mailman",c:"郵差"},
+    {e:"nurse",c:"護士"},{e:"police officer",c:"警官"},{e:"salesman",c:"售貨員"},{e:"scientist",c:"科學家"},
+    {e:"secretary",c:"秘書"},{e:"singer",c:"歌手"},{e:"soldier",c:"軍人"},{e:"teacher",c:"老師"},
+    {e:"waiter",c:"男服務生"},{e:"waitress",c:"女服務生"},{e:"worker",c:"工人"},{e:"writer",c:"作家"},
+
+    // 主題二十：氣候與自然環境 (Weather & Nature)
+    {e:"weather",c:"天氣"},{e:"cloudy",c:"多雲的"},{e:"foggy",c:"有霧的"},{e:"rainy",c:"下雨的"},
+    {e:"snowy",c:"下雪的"},{e:"sunny",c:"晴朗的"},{e:"windy",c:"風大的"},{e:"hot",c:"熱的"},
+    {e:"cold",c:"冷的"},{e:"cool",c:"涼爽的"},{e:"warm",c:"溫暖的"},{e:"typhoon",c:"颱風"},
+    {e:"rainbow",c:"彩虹"},{e:"snow",c:"雪"},{e:"thunder",c:"打雷"},{e:"wind",c:"風"},
+    {e:"nature",c:"自然"},{e:"air",c:"空氣"},{e:"earth",c:"地球/土地"},{e:"moon",c:"月亮"},
+    {e:"sky",c:"天空"},{e:"star",c:"星星"},{e:"sun",c:"太陽"},{e:"space",c:"太空"},
+// 主題二十一：地理環境 (Geography)
+    {e:"beach",c:"海灘"},{e:"coast",c:"海岸"},{e:"desert",c:"沙漠"},{e:"forest",c:"森林"},
+    {e:"hill",c:"山丘"},{e:"island",c:"島嶼"},{e:"lake",c:"湖泊"},{e:"mountain",c:"山"},
+    {e:"ocean",c:"海洋"},{e:"river",c:"河流"},{e:"sea",c:"海"},{e:"spring",c:"泉水/春天"},
+    {e:"stream",c:"小溪"},{e:"valley",c:"山谷"},{e:"waterfall",c:"瀑布"},
+
+    // 主題二十二：動物與昆蟲 (Animals & Insects)
+    {e:"animal",c:"動物"},{e:"bear",c:"熊"},{e:"cat",c:"貓"},{e:"chicken",c:"雞"},
+    {e:"cow",c:"母牛"},{e:"dog",c:"狗"},{e:"donkey",c:"驢子"},{e:"duck",c:"鴨子"},
+    {e:"elephant",c:"大象"},{e:"fox",c:"狐狸"},{e:"frog",c:"青蛙"},{e:"goat",c:"山羊"},
+    {e:"hippo",c:"河馬"},{e:"horse",c:"馬"},{e:"kangaroo",c:"袋鼠"},{e:"koala",c:"無尾熊"},
+    {e:"lamb",c:"小羊"},{e:"lion",c:"獅子"},{e:"monkey",c:"猴子"},{e:"mouse",c:"老鼠"},
+    {e:"ox",c:"公牛"},{e:"pig",c:"豬"},{e:"puppy",c:"小狗"},{e:"rabbit",c:"兔子"},
+    {e:"rat",c:"大老鼠"},{e:"sheep",c:"綿羊"},{e:"tiger",c:"老虎"},{e:"turkey",c:"火雞"},
+    {e:"whale",c:"鯨魚"},{e:"zebra",c:"斑馬"},{e:"bird",c:"鳥"},{e:"eagle",c:"老鷹"},
+    {e:"owl",c:"貓頭鷹"},{e:"parrot",c:"鸚鵡"},{e:"swan",c:"天鵝"},{e:"bee",c:"蜜蜂"},
+    {e:"butterfly",c:"蝴蝶"},{e:"ant",c:"螞蟻"},{e:"bug",c:"小蟲"},{e:"cockroach",c:"蟑螂"},
+    {e:"dragonfly",c:"蜻蜓"},{e:"mosquito",c:"蚊子"},{e:"snail",c:"蝸牛"},{e:"spider",c:"蜘蛛"},
+    {e:"crab",c:"螃蟹"},{e:"dolphin",c:"海豚"},{e:"shark",c:"鯊魚"},{e:"shrimp",c:"蝦子"},
+    {e:"snake",c:"蛇"},{e:"turtle",c:"烏龜"},{e:"dinosaur",c:"恐龍"},{e:"pet",c:"寵物"},
+// 主題二十三：動作、狀態與其他形容詞 (Actions & States)
+    {e:"act",c:"行動/表演"},{e:"add",c:"增加"},{e:"agree",c:"同意"},{e:"appear",c:"出現"},
+    {e:"ask",c:"詢問"},{e:"begin",c:"開始"},{e:"believe",c:"相信"},{e:"break",c:"打破"},
+    {e:"bring",c:"帶來"},{e:"call",c:"打電話/稱呼"},{e:"care",c:"在乎"},{e:"carry",c:"攜帶"},
+    {e:"catch",c:"捕捉/趕上"},{e:"check",c:"檢查"},{e:"choose",c:"選擇"},{e:"clean",c:"清潔"},
+    {e:"close",c:"關閉"},{e:"come",c:"來"},{e:"count",c:"數數"},{e:"cover",c:"覆蓋"},
+    {e:"cry",c:"哭"},{e:"cut",c:"切割"},{e:"decide",c:"決定"},{e:"die",c:"死亡"},
+    {e:"drop",c:"掉落"},{e:"eat",c:"吃"},{e:"end",c:"結束"},{e:"enjoy",c:"享受"},
+    {e:"fall",c:"落下"},{e:"feel",c:"感覺"},{e:"fight",c:"戰鬥/吵架"},{e:"find",c:"發現"},
+    {e:"finish",c:"完成"},{e:"follow",c:"跟隨"},{e:"forget",c:"忘記"},{e:"get",c:"得到"},
+    {e:"give",c:"給"},{e:"go",c:"去"},{e:"grow",c:"成長"},{e:"happen",c:"發生"},
+    {e:"hear",c:"聽見"},{e:"help",c:"幫助"},{e:"hide",c:"躲藏"},{e:"hold",c:"握住"},
+    {e:"hope",c:"希望"},{e:"hurry",c:"趕快"},{e:"keep",c:"保持"},{e:"kill",c:"殺死"},
+    {e:"know",c:"知道"},{e:"laugh",c:"笑"},{e:"lead",c:"領導"},{e:"learn",c:"學習"},
+    {e:"leave",c:"離開"},{e:"let",c:"讓"},{e:"lie",c:"躺/說謊"},{e:"like",c:"喜歡"},
+    {e:"listen",c:"聽"},{e:"live",c:"居住/生活"},{e:"look",c:"看"},{e:"love",c:"愛"},
+    {e:"make",c:"製作"},{e:"mean",c:"意思"},{e:"meet",c:"遇見"},{e:"miss",c:"思念/錯過"},
+    {e:"move",c:"移動/搬家"},{e:"open",c:"打開"},{e:"plan",c:"計畫"},{e:"push",c:"推"},
+    {e:"pull",c:"拉"},{e:"put",c:"放"},{e:"read",c:"閱讀"},{e:"remember",c:"記得"},
+    {e:"run",c:"跑"},{e:"save",c:"拯救/存錢"},{e:"say",c:"說"},{e:"see",c:"看見"},
+    {e:"sell",c:"賣"},{e:"send",c:"送出"},{e:"shout",c:"大喊"},{e:"show",c:"展示"},
+    {e:"sit",c:"坐"},{e:"sleep",c:"睡覺"},{e:"smile",c:"微笑"},{e:"speak",c:"說話"},
+    {e:"stand",c:"站立"},{e:"stop",c:"停止"},{e:"study",c:"讀書"},{e:"take",c:"拿/搭乘"},
+    {e:"talk",c:"談話"},{e:"teach",c:"教導"},{e:"tell",c:"告訴"},{e:"think",c:"思考/認為"},
+    {e:"try",c:"嘗試"},{e:"use",c:"使用"},{e:"wait",c:"等待"},{e:"wake",c:"醒來"},
+    {e:"walk",c:"走路"},{e:"want",c:"想要"},{e:"wash",c:"洗"},{e:"watch",c:"觀看"},
+    {e:"work",c:"工作"},{e:"write",c:"寫"},
+// 主題二十四：虛詞與常用詞 (Function Words & Others)
+    {e:"about",c:"關於/大約"},{e:"after",c:"在...之後"},{e:"around",c:"在...周圍"},{e:"at",c:"在(地點/時間)"},
+    {e:"before",c:"在...之前"},{e:"behind",c:"在...後面"},{e:"between",c:"在...之間"},{e:"by",c:"在...旁邊/藉由"},
+    {e:"for",c:"為了/給"},{e:"from",c:"來自"},{e:"in",c:"在...裡面"},{e:"into",c:"進入"},
+    {e:"near",c:"靠近"},{e:"of",c:"...的"},{e:"off",c:"離開/脫離"},{e:"on",c:"在...上面"},
+    {e:"out",c:"在...外面"},{e:"over",c:"在...正上方"},{e:"to",c:"到/向"},{e:"under",c:"在...下面"},
+    {e:"with",c:"和...一起/用"},{e:"and",c:"和/而且"},{e:"but",c:"但是"},{e:"or",c:"或者"},
+    {e:"so",c:"所以"},{e:"because",c:"因為"},{e:"if",c:"如果"},{e:"although",c:"雖然"},
+    {e:"both",c:"兩者都"},{e:"either",c:"兩者之一"},{e:"neither",c:"兩者都不"},{e:"not only",c:"不只"},
+    {e:"also",c:"也"},{e:"too",c:"也/太"},{e:"even",c:"甚至"},{e:"only",c:"只有"},
+    {e:"still",c:"仍然"},{e:"very",c:"非常"},{e:"quite",c:"相當"},{e:"away",c:"離開"},
+    {e:"here",c:"這裡"},{e:"there",c:"那裡"},{e:"can",c:"能/可以"},{e:"could",c:"能夠(過去式)"},
+    {e:"will",c:"將要"},{e:"would",c:"將要(過去式)"},{e:"may",c:"可能/可以"},{e:"might",c:"可能"},
+    {e:"must",c:"必須"},{e:"should",c:"應該"},{e:"do",c:"做/助動詞"},{e:"have",c:"有/助動詞"},
+    {e:"be",c:"是(am/is/are)"},{e:"all",c:"全部"},{e:"any",c:"任何"},{e:"every",c:"每個"},
+    {e:"each",c:"每個"},{e:"other",c:"其他的"},{e:"another",c:"另一個"},{e:"some",c:"一些"},
+    {e:"something",c:"某事"},{e:"someone",c:"某人"},{e:"everyone",c:"每個人"},{e:"nothing",c:"無事"},
+    {e:"nobody",c:"無人"},{e:"everything",c:"每件事"},{e:"what",c:"什麼"},{e:"who",c:"誰"},
+    {e:"whose",c:"誰的"},{e:"which",c:"哪一個"},{e:"when",c:"什麼時候"},{e:"where",c:"哪裡"},
+    {e:"why",c:"為什麼"},{e:"how",c:"如何"},{e:"whether",c:"是否"}
+];
+
+    let testSet = [], userAns = {}, curPage = 0;
+
+    function start() {
+        if(!document.getElementById('userName').value) return alert("請輸入名字");
+        testSet = [...db].sort(() => 0.5 - Math.random()).slice(0, 20);
+        document.getElementById('page-start').classList.add('hidden');
+        document.getElementById('page-quiz').classList.remove('hidden');
+        render();
+    }
+
+    function render() {
+        const cont = document.getElementById('quiz-cont');
+        cont.innerHTML = "";
+        const slice = testSet.slice(curPage * 2, curPage * 2 + 2);
+        slice.forEach((q, i) => {
+            const realIdx = curPage * 2 + i;
+            let opts = [q.e];
+            while(opts.length < 4) {
+                let r = db[Math.floor(Math.random()*db.length)].e;
+                if(!opts.includes(r)) opts.push(r);
+            }
+            opts.sort(() => 0.5 - Math.random());
+            cont.innerHTML += `<div class="question-box"><p><b>Q${realIdx+1}.</b> 「${q.c}」</p><div class="options">${opts.map(o => `<label><input type="radio" name="q${realIdx}" value="${o}" ${userAns[realIdx]===o?'checked':''} onchange="userAns[${realIdx}]='${o}'"> ${o}</label>`).join('')}</div></div>`;
+        });
+        document.getElementById('next-btn').innerText = curPage === 9 ? "看結果" : "下一頁";
+    }
+
+    function nextPage() {
+        if(curPage === 9) return showRes();
+        curPage++;
+        render();
+        window.scrollTo(0,0);
+    }
+
+    function speak(t) {
+        const u = new SpeechSynthesisUtterance(t);
+        u.lang = 'en-US';
+        speechSynthesis.speak(u);
+    }
+
+    function showRes() {
+        let score = 0, rev = "";
+        testSet.forEach((q, i) => {
+            if(userAns[i] === q.e) score += 5;
+            else rev += `<div class="review-card"><span class="speaker" onclick="speak('${q.e}')">🔊</span><b>${q.c}</b><br>❌ 你答: ${userAns[i]||'未答'}<br>✅ 正解: <span style="color:green">${q.e}</span></div>`;
+        });
+        document.getElementById('page-quiz').classList.add('hidden');
+        document.getElementById('page-res').classList.remove('hidden');
+        document.getElementById('score-text').innerText = document.getElementById('userName').value + "：" + score + " 分";
+        document.getElementById('review-list').innerHTML = rev || "太完美了！全對！";
+    }
+</script>
+</body>
+</html>
